@@ -15,6 +15,10 @@ export function hset(key, ...keyValuePairs) {
     }
 
     hash[field] = value
+
+    if (this.fieldExpires.has(key, field)) {
+      this.fieldExpires.delete(key, field)
+    }
   }
 
   this.data.set(key, hash)

@@ -6,6 +6,9 @@ export function hdel(key, ...fields) {
   const numDeleted = fields.filter(field => {
     if ({}.hasOwnProperty.call(value, field)) {
       delete value[field]
+      if (this.fieldExpires.has(key, field)) {
+        this.fieldExpires.delete(key, field)
+      }
       return true
     }
     return false

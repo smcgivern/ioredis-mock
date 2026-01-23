@@ -12,6 +12,7 @@ import emitDisconnectEvent from './commands-utils/emitDisconnectEvent'
 import contextMap, { createContext } from './context'
 import { createData } from './data'
 import { createExpires } from './expires'
+import { createFieldExpires } from './field-expires'
 import parseKeyspaceEvents from './keyspace-notifications'
 import Pipeline from './pipeline'
 
@@ -103,9 +104,14 @@ class RedisMock extends EventEmitter {
       this.context.expires,
       optionsWithDefault.keyPrefix
     )
+    this.fieldExpires = createFieldExpires(
+      this.context.fieldExpires,
+      optionsWithDefault.keyPrefix
+    )
     this.data = createData(
       this.context.data,
       this.expires,
+      this.fieldExpires,
       optionsWithDefault.data,
       optionsWithDefault.keyPrefix
     )
@@ -188,6 +194,7 @@ class RedisMock extends EventEmitter {
   duplicate(override) {
     const mock = new RedisMock({ ...this.options, ...override })
     mock.expires = this.expires
+    mock.fieldExpires = this.fieldExpires
     mock.data = this.data
     mock.channels = this.channels
     mock.patternChannels = this.patternChannels

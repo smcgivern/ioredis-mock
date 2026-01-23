@@ -1,7 +1,9 @@
 import { convertStringToBuffer } from '../commands-utils/convertStringToBuffer'
+import { getValidHash } from '../commands-utils/field-expiration'
 
 export function hkeys(key) {
-  return this.data.has(key) ? Object.keys(this.data.get(key)) : []
+  const hash = getValidHash(this, key)
+  return hash ? Object.keys(hash) : []
 }
 
 export function hkeysBuffer(globString) {

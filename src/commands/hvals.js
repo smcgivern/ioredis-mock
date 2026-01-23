@@ -1,11 +1,9 @@
 import { convertStringToBuffer } from '../commands-utils/convertStringToBuffer'
+import { getValidHash } from '../commands-utils/field-expiration'
 
 export function hvals(key) {
-  if (!this.data.has(key)) {
-    return []
-  }
-
-  return Object.values(this.data.get(key))
+  const hash = getValidHash(this, key)
+  return hash ? Object.values(hash) : []
 }
 
 export function hvalsBuffer(key) {

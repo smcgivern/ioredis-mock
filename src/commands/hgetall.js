@@ -1,7 +1,8 @@
 import { convertStringToBuffer } from '../commands-utils/convertStringToBuffer'
+import { getValidHash } from '../commands-utils/field-expiration'
 
 export function hgetall(key) {
-  return this.data.get(key) || {}
+  return getValidHash(this, key) || {}
 }
 
 export function hgetallBuffer(key) {

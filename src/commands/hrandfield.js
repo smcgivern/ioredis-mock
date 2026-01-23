@@ -1,6 +1,7 @@
 import shuffle from 'lodash.shuffle'
 
 import { convertStringToBuffer } from '../commands-utils/convertStringToBuffer'
+import { getValidHash } from '../commands-utils/field-expiration'
 import sample from '../commands-utils/sample'
 import { type } from './index'
 
@@ -19,7 +20,10 @@ export function hrandfield(key, count, WITHVALUES) {
     )
   }
 
-  const hash = this.data.get(key)
+  const hash = getValidHash(this, key)
+  if (!hash) {
+    return null
+  }
   const keys = Object.keys(hash)
 
   if (!count) {

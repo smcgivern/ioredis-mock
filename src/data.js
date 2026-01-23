@@ -2,8 +2,19 @@ import { EventEmitter } from 'events'
 
 export function createSharedData(
   sharedExpires,
-  modifiedKeyEvents = new EventEmitter()
+  sharedFieldExpiresOrModifiedKeyEvents = null,
+  modifiedKeyEventsArg = null
 ) {
+  let sharedFieldExpires
+  let modifiedKeyEvents
+  if (sharedFieldExpiresOrModifiedKeyEvents instanceof EventEmitter) {
+    sharedFieldExpires = null
+    modifiedKeyEvents = sharedFieldExpiresOrModifiedKeyEvents
+  } else {
+    sharedFieldExpires = sharedFieldExpiresOrModifiedKeyEvents
+    modifiedKeyEvents = modifiedKeyEventsArg || new EventEmitter()
+  }
+
   let raw = {}
 
   return Object.freeze({
@@ -13,6 +24,9 @@ export function createSharedData(
     delete(key) {
       if (sharedExpires.has(key)) {
         sharedExpires.delete(key)
+      }
+      if (sharedFieldExpires) {
+        sharedFieldExpires.deleteKey(key)
       }
       delete raw[key]
       modifiedKeyEvents.emit('modified', key)
@@ -54,14 +68,11 @@ export function createSharedData(
       return {}.hasOwnProperty.call(raw, key)
     },
     keys(prefix) {
-      // Filter out expired keys without deleting them from storage
       const allKeys = Object.keys(raw)
       const validKeys = allKeys.filter(key => {
-        // If key has no expiration, it's valid
         if (!sharedExpires.has(key)) {
           return true
         }
-        // If key has expiration but hasn't expired yet, it's valid
         return !sharedExpires.isExpired(key)
       })
 
@@ -93,10 +104,27 @@ export function createSharedData(
 export function createData(
   sharedData,
   expiresInstance,
-  initial = {},
-  keyPrefix = ''
+  fieldExpiresInstanceOrInitial = {},
+  initialOrKeyPrefix = {},
+  keyPrefixArg = ''
 ) {
-  function createInstance(prefix, expires) {
+  let fieldExpiresInstance
+  let initial
+  let keyPrefix
+  if (
+    fieldExpiresInstanceOrInitial &&
+    typeof fieldExpiresInstanceOrInitial.withKeyPrefix === 'function'
+  ) {
+    fieldExpiresInstance = fieldExpiresInstanceOrInitial
+    initial = initialOrKeyPrefix
+    keyPrefix = keyPrefixArg
+  } else {
+    fieldExpiresInstance = null
+    initial = fieldExpiresInstanceOrInitial
+    keyPrefix = typeof initialOrKeyPrefix === 'string' ? initialOrKeyPrefix : ''
+  }
+
+  function createInstance(prefix, expires, fieldExpires) {
     return Object.freeze({
       clear: () => sharedData.clear(),
       delete: key => sharedData.delete(`${prefix}${key}`),
@@ -106,12 +134,16 @@ export function createData(
       set: (key, val) => sharedData.set(`${prefix}${key}`, val),
       withKeyPrefix(newKeyPrefix) {
         if (newKeyPrefix === prefix) return this
-        return createInstance(newKeyPrefix, expires.withKeyPrefix(newKeyPrefix))
+        return createInstance(
+          newKeyPrefix,
+          expires.withKeyPrefix(newKeyPrefix),
+          fieldExpires ? fieldExpires.withKeyPrefix(newKeyPrefix) : null
+        )
       },
     })
   }
 
-  const data = createInstance(keyPrefix, expiresInstance)
+  const data = createInstance(keyPrefix, expiresInstance, fieldExpiresInstance)
 
   Object.keys(initial).forEach(key => data.set(key, initial[key]))
 

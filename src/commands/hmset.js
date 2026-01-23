@@ -7,7 +7,12 @@ export function hmset(key, ...args) {
 
   const hash = this.data.get(key)
   for (let i = 0; i < args.length; i += 2) {
-    hash[args[i]] = args[i + 1]
+    const field = args[i]
+    hash[field] = args[i + 1]
+
+    if (this.fieldExpires.has(key, field)) {
+      this.fieldExpires.delete(key, field)
+    }
   }
 
   this.data.set(key, hash)

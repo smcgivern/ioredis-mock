@@ -1,5 +1,8 @@
+import { getValidHash } from '../commands-utils/field-expiration'
+
 export function hlen(key) {
-  return this.data.has(key) ? Object.keys(this.data.get(key)).length : 0
+  const hash = getValidHash(this, key)
+  return hash ? Object.keys(hash).length : 0
 }
 
 export const hlenBuffer = hlen
